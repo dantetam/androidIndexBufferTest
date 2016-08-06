@@ -1,0 +1,11 @@
+/bin/
+/lib/
+/.gradle/
+/.idea/
+/app/src/main/assets/
+/app/src/main/res/
+/gradle/
+/build/
+*.properties
+*.iml
+*.gradle

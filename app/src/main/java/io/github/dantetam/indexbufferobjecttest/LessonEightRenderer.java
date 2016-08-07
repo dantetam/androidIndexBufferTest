@@ -158,10 +158,14 @@ public class LessonEightRenderer implements GLSurfaceView.Renderer {
 		// matrices separately if we choose.
 		Matrix.setLookAtM(viewMatrix, 0, eyeX, eyeY, eyeZ, lookX, lookY, lookZ, upX, upY, upZ);
 
-		final String vertexShader = RawResourceReader.readTextFileFromRawResource(lessonEightActivity,
+		/*final String vertexShader = RawResourceReader.readTextFileFromRawResource(lessonEightActivity,
 				R.raw.per_pixel_vertex_shader_no_tex);
 		final String fragmentShader = RawResourceReader.readTextFileFromRawResource(lessonEightActivity,
-				R.raw.per_pixel_fragment_shader_no_tex);
+				R.raw.per_pixel_fragment_shader_no_tex);*/
+        final String vertexShader = RawResourceReader.readTextFileFromRawResource(lessonEightActivity,
+                R.raw.color_vertex_shader);
+        final String fragmentShader = RawResourceReader.readTextFileFromRawResource(lessonEightActivity,
+                R.raw.color_fragment_shader);
 
 		final int vertexShaderHandle = ShaderHelper.compileShader(GLES20.GL_VERTEX_SHADER, vertexShader);
 		final int fragmentShaderHandle = ShaderHelper.compileShader(GLES20.GL_FRAGMENT_SHADER, fragmentShader);
@@ -259,9 +263,9 @@ public class LessonEightRenderer implements GLSurfaceView.Renderer {
 	}
 
 	class HeightMap {
-		static final int SIZE_PER_SIDE = 32;
+		static final int SIZE_PER_SIDE = 16;
 		static final float MIN_POSITION = -5f;
-		static final float POSITION_RANGE = 10f;
+		static final float POSITION_RANGE = 20f;
 
 		final int[] vbo = new int[1];
 		final int[] ibo = new int[1];
@@ -287,27 +291,48 @@ public class LessonEightRenderer implements GLSurfaceView.Renderer {
 						// Build our heightmap from the top down, so that our triangles are counter-clockwise.
 						final float yRatio = 1f - (y / (float) (yLength - 1));
 						
-						final float xPosition = MIN_POSITION + (xRatio * POSITION_RANGE);
-						final float yPosition = MIN_POSITION + (yRatio * POSITION_RANGE);
+						float xPosition = MIN_POSITION + (xRatio * POSITION_RANGE * 1f/2f);
+                        float yPosition = MIN_POSITION + (yRatio * POSITION_RANGE * 3f/4f);
+
+                        float constantHex = (float) POSITION_RANGE / (float) SIZE_PER_SIDE;
+                        if (y % 2 == 0) {
+                            if (x % 2 == 1) {
+                                yPosition -= constantHex * 1f / 8f;
+                            }
+                            else {
+                                yPosition += constantHex * 1f / 8f;
+                            }
+                        }
+                        else {
+                            if (x % 2 == 1) {
+                                yPosition += constantHex * 1f / 8f;
+                            }
+                            else {
+                                yPosition -= constantHex * 1f / 8f;
+                            }
+                        }
 
 						// Position
 						heightMapVertexData[offset++] = xPosition;
 						heightMapVertexData[offset++] = yPosition;
-						heightMapVertexData[offset++] = ((xPosition * xPosition) + (yPosition * yPosition)) / 10f;					
+						//heightMapVertexData[offset++] = ((xPosition * xPosition) + (yPosition * yPosition)) / 10f;
+                        //heightMapVertexData[offset++] = xPosition * yPosition / 10f;
+                        heightMapVertexData[offset++] = 0;
 
 						// Cheap normal using a derivative of the function.
 						// The slope for X will be 2X, for Y will be 2Y.
 						// Divide by 10 since the position's Z is also divided by 10.
-						final float xSlope = (2 * xPosition) / 10f;
-						final float ySlope = (2 * yPosition) / 10f;
+						/*final float xSlope = (2 * xPosition) / 10f;
+						final float ySlope = (2 * yPosition) / 10f;*/
 						
 						// Calculate the normal using the cross product of the slopes.
-						final float[] planeVectorX = {1f, 0f, xSlope};
-						final float[] planeVectorY = {0f, 1f, ySlope};
-						final float[] normalVector = {
+						//final float[] planeVectorX = {1f, 0f, xSlope};
+						//final float[] planeVectorY = {0f, 1f, ySlope};
+						/*final float[] normalVector = {
 								(planeVectorX[1] * planeVectorY[2]) - (planeVectorX[2] * planeVectorY[1]),
 								(planeVectorX[2] * planeVectorY[0]) - (planeVectorX[0] * planeVectorY[2]),
-								(planeVectorX[0] * planeVectorY[1]) - (planeVectorX[1] * planeVectorY[0])};
+								(planeVectorX[0] * planeVectorY[1]) - (planeVectorX[1] * planeVectorY[0])};*/
+                        final float[] normalVector = {0, 0, 1};
 						
 						// Normalize the normal						
 						final float length = Matrix.length(normalVector[0], normalVector[1], normalVector[2]);
@@ -389,7 +414,7 @@ public class LessonEightRenderer implements GLSurfaceView.Renderer {
 		}
 
 		void render() {
-			if (vbo[0] > 0 && ibo[0] > 0) {				
+			if (vbo[0] > 0 && ibo[0] > 0) {
 				GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo[0]);
 
 				// Bind Attributes
